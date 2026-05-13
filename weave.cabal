@@ -1,0 +1,37 @@
+cabal-version:  3.0
+name:           weave
+version:        0.1.0.0
+
+library
+  hs-source-dirs:   src
+  exposed-modules:  Weave.Core
+  default-language: Haskell2010
+  default-extensions:
+      DataKinds
+    , GADTs
+    , TypeFamilies
+    , TypeOperators
+    , KindSignatures
+    , ScopedTypeVariables
+  build-depends:
+      base ^>=4.18
+    , vector >= 0.13
+
+executable weave-demo
+  main-is:          Main.hs
+  hs-source-dirs:   app
+  default-language: Haskell2010
+  build-depends:
+      base ^>=4.18
+    , weave
+    , vector >= 0.13
+
+test-suite weave-tests
+  type:             exitcode-stdio-1.0
+  main-is:          Spec.hs
+  hs-source-dirs:   test
+  default-language: Haskell2010
+  build-depends:
+      base ^>=4.18
+    , weave
+    , vector >= 0.13
