@@ -7,6 +7,7 @@ library
   exposed-modules:
       Weave.Core
     , Weave.Shape
+    , Weave.Ops
   default-language: Haskell2010
   default-extensions:
       DataKinds
