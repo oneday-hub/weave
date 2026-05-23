@@ -4,62 +4,62 @@ module Main where
 import Weave.Core
 import Weave.Shape
 import Weave.Ops
+import Weave.Grad
 
 main :: IO ()
 main = do
-  putStrLn "Weave DSL - Layer 3: Tensor Operations"
+  putStrLn "Weave DSL - Layer 4: Automatic Differentiation"
   putStrLn ""
 
-  -- Elementwise operations
-  putStrLn "--- Elementwise Operations ---"
-  let a = fromList [1,2,3,4] :: Tensor '[4]
-  let b = fromList [5,6,7,8] :: Tensor '[4]
-  putStrLn $ "a         = " ++ show (toList a)
-  putStrLn $ "b         = " ++ show (toList b)
-  putStrLn $ "tAdd a b  = " ++ show (toList (tAdd a b))
-  putStrLn $ "tSub a b  = " ++ show (toList (tSub a b))
-  putStrLn $ "tMul a b  = " ++ show (toList (tMul a b))
-  putStrLn $ "tScale 2  = " ++ show (toList (tScale 2.0 a))
+  -- Basic derivatives
+  putStrLn "--- Forward Mode: diff ---"
+  putStrLn $ "d/dx x^2    at x=5   = " ++ show (diff (\x -> x*x) 5.0)
+  putStrLn $ "d/dx x^3    at x=3   = " ++ show (diff (\x -> x*x*x) 3.0)
+  putStrLn $ "d/dx sin(x) at x=0   = " ++ show (r4 (diff sin 0.0))
+  putStrLn $ "d/dx exp(x) at x=1   = " ++ show (r4 (diff exp 1.0))
+  putStrLn $ "d/dx x^2+3x at x=2   = " ++ show (diff (\x -> x*x + 3*x) 2.0)
   putStrLn ""
 
-  -- Activations
-  putStrLn "--- Activation Functions ---"
-  let v = fromList [-2,-1,0,1,2] :: Tensor '[5]
-  putStrLn $ "input     = " ++ show (toList v)
-  putStrLn $ "relu      = " ++ show (toList (relu v))
-  putStrLn $ "sigmoid   = " ++ show (map r4 (toList (sigmoid v)))
-  putStrLn $ "tanhT     = " ++ show (map r4 (toList (tanhT v)))
+  -- Nested functions
+  putStrLn "--- Composed Functions ---"
+  putStrLn $ "d/dx sin(x^2)  at x=1 = " ++ show (r6 (diff (\x -> sin (x*x)) 1.0))
+  putStrLn $ "d/dx exp(sin x) at x=0 = " ++ show (r6 (diff (\x -> exp (sin x)) 0.0))
   putStrLn ""
 
-  -- Softmax
-  putStrLn "--- Softmax ---"
-  let logits = fromList [2.0, 1.0, 0.1] :: Tensor '[3]
-  let probs  = softmax logits
-  putStrLn $ "logits    = " ++ show (toList logits)
-  putStrLn $ "probs     = " ++ show (map r4 (toList probs))
-  putStrLn $ "sum       = " ++ show (tSum probs)
+  -- Gradient vector
+  putStrLn "--- Gradient Vector ---"
+  let g1 = gradVec (\[x,y] -> x*x + y*y) [3.0, 4.0]
+  putStrLn $ "f(x,y) = x^2 + y^2"
+  putStrLn $ "grad at (3,4) = " ++ show g1
+  putStrLn $ "expected      = [6.0, 8.0]"
   putStrLn ""
 
-  -- Matrix multiply
-  putStrLn "--- Matrix Multiply ---"
-  let m1 = fromList [1,2,3,4,5,6] :: Tensor '[2,3]
-  let m2 = fromList [7,8,9,10,11,12] :: Tensor '[3,2]
-  let m3 = matmul m1 m2
-  putStrLn $ "A shape        = " ++ show (tShape m1)
-  putStrLn $ "B shape        = " ++ show (tShape m2)
-  putStrLn $ "matmul A B     = " ++ show (toList m3)
-  putStrLn $ "output shape   = " ++ show (tShape m3)
+  let g2 = gradVec (\[x,y] -> x*x + 2*y*y + x*y) [3.0, 4.0]
+  putStrLn $ "f(x,y) = x^2 + 2y^2 + xy"
+  putStrLn $ "grad at (3,4) = " ++ show (map r4 g2)
+  putStrLn $ "expected      = [10.0, 19.0]"
   putStrLn ""
 
-  -- Transpose
-  putStrLn "--- Transpose ---"
-  let t  = fromList [1,2,3,4,5,6] :: Tensor '[2,3]
-  let tT = transpose2D t
-  putStrLn $ "original shape = " ++ show (tShape t)
-  putStrLn $ "transposed     = " ++ show (tShape tT)
+  -- Gradient checks
+  putStrLn "--- Gradient Checks (analytic vs finite diff) ---"
+  let ok1 = checkGrad (\x -> x*x)   (\x -> 2*x)   3.0 1e-5
+  let ok2 = checkGrad (\x -> x*x*x) (\x -> 3*x*x) 2.0 1e-5
+  let ok3 = checkGrad sin            cos            1.0 1e-5
+  let ok4 = checkGrad exp            exp            0.5 1e-5
+  putStrLn $ "x^2   at x=3: " ++ result ok1
+  putStrLn $ "x^3   at x=2: " ++ result ok2
+  putStrLn $ "sin   at x=1: " ++ result ok3
+  putStrLn $ "exp   at x=0.5: " ++ result ok4
   putStrLn ""
 
-  putStrLn "Layer 3 complete."
+  putStrLn "Layer 4 complete."
+
+result :: Bool -> String
+result True  = "PASS"
+result False = "FAIL"
 
 r4 :: Double -> Double
 r4 x = fromIntegral (round (x * 10000) :: Int) / 10000.0
+
+r6 :: Double -> Double
+r6 x = fromIntegral (round (x * 1000000) :: Int) / 1000000.0

@@ -8,6 +8,7 @@ library
       Weave.Core
     , Weave.Shape
     , Weave.Ops
+    , Weave.Grad
   default-language: Haskell2010
   default-extensions:
       DataKinds
