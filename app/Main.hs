@@ -5,61 +5,69 @@ import Weave.Core
 import Weave.Shape
 import Weave.Ops
 import Weave.Grad
+import Weave.Models
 
 main :: IO ()
 main = do
-  putStrLn "Weave DSL - Layer 4: Automatic Differentiation"
+  putStrLn "Weave DSL - Layer 5: Deep Learning Models"
   putStrLn ""
 
-  -- Basic derivatives
-  putStrLn "--- Forward Mode: diff ---"
-  putStrLn $ "d/dx x^2    at x=5   = " ++ show (diff (\x -> x*x) 5.0)
-  putStrLn $ "d/dx x^3    at x=3   = " ++ show (diff (\x -> x*x*x) 3.0)
-  putStrLn $ "d/dx sin(x) at x=0   = " ++ show (r4 (diff sin 0.0))
-  putStrLn $ "d/dx exp(x) at x=1   = " ++ show (r4 (diff exp 1.0))
-  putStrLn $ "d/dx x^2+3x at x=2   = " ++ show (diff (\x -> x*x + 3*x) 2.0)
+  -- Linear layer
+  putStrLn "--- Linear Layer ---"
+  let input   = fromList [1.0, 0.5, -0.3, 0.8] :: Tensor '[1, 4]
+  let weights = fromList [ 0.1, 0.2
+                         , 0.3, 0.4
+                         , 0.5, 0.6
+                         , 0.7, 0.8 ] :: Tensor '[4, 2]
+  let output  = linearForward input weights
+  putStrLn $ "input   shape = " ++ show (tShape input)
+  putStrLn $ "weights shape = " ++ show (tShape weights)
+  putStrLn $ "output  shape = " ++ show (tShape output)
+  putStrLn $ "output values = " ++ show (map r4 (toList output))
   putStrLn ""
 
-  -- Nested functions
-  putStrLn "--- Composed Functions ---"
-  putStrLn $ "d/dx sin(x^2)  at x=1 = " ++ show (r6 (diff (\x -> sin (x*x)) 1.0))
-  putStrLn $ "d/dx exp(sin x) at x=0 = " ++ show (r6 (diff (\x -> exp (sin x)) 0.0))
+  -- MLP
+  putStrLn "--- MLP: 4 -> 8 -> 2 ---"
+  putStrLn "Initializing weights..."
+  w1init <- initWeights :: IO (Tensor '[4, 8])
+  w2init <- initWeights :: IO (Tensor '[8, 2])
+  let mlp0 = MLP2 w1init w2init :: MLP2 4 8 2
+  putStrLn $ "w1 shape = " ++ show (tShape w1init)
+  putStrLn $ "w2 shape = " ++ show (tShape w2init)
+
+  let input2  = fromList [1.0, 0.5, -0.3, 0.8] :: Tensor '[1, 4]
+  let target  = fromList [1.0, 0.0]             :: Tensor '[1, 2]
+  let pred0   = mlpForward mlp0 input2
+  let loss0   = mseLoss pred0 target
+  putStrLn $ "initial prediction = " ++ show (map r4 (toList pred0))
+  putStrLn $ "initial loss       = " ++ show (r4 loss0)
   putStrLn ""
 
-  -- Gradient vector
-  putStrLn "--- Gradient Vector ---"
-  let g1 = gradVec (\[x,y] -> x*x + y*y) [3.0, 4.0]
-  putStrLn $ "f(x,y) = x^2 + y^2"
-  putStrLn $ "grad at (3,4) = " ++ show g1
-  putStrLn $ "expected      = [6.0, 8.0]"
+  -- Training loop
+  putStrLn "--- Training (SGD lr=0.1, 10 epochs) ---"
+  putStrLn ""
+  mlpFinal <- trainLoop 10 0.1 mlp0 input2 target
   putStrLn ""
 
-  let g2 = gradVec (\[x,y] -> x*x + 2*y*y + x*y) [3.0, 4.0]
-  putStrLn $ "f(x,y) = x^2 + 2y^2 + xy"
-  putStrLn $ "grad at (3,4) = " ++ show (map r4 g2)
-  putStrLn $ "expected      = [10.0, 19.0]"
+  -- Final results
+  let predF = mlpForward mlpFinal input2
+  let lossF = mseLoss predF target
+  putStrLn $ "final prediction = " ++ show (map r4 (toList predF))
+  putStrLn $ "final loss       = " ++ show (r4 lossF)
   putStrLn ""
 
-  -- Gradient checks
-  putStrLn "--- Gradient Checks (analytic vs finite diff) ---"
-  let ok1 = checkGrad (\x -> x*x)   (\x -> 2*x)   3.0 1e-5
-  let ok2 = checkGrad (\x -> x*x*x) (\x -> 3*x*x) 2.0 1e-5
-  let ok3 = checkGrad sin            cos            1.0 1e-5
-  let ok4 = checkGrad exp            exp            0.5 1e-5
-  putStrLn $ "x^2   at x=3: " ++ result ok1
-  putStrLn $ "x^3   at x=2: " ++ result ok2
-  putStrLn $ "sin   at x=1: " ++ result ok3
-  putStrLn $ "exp   at x=0.5: " ++ result ok4
+  -- Loss function demo
+  putStrLn "--- MSE Loss ---"
+  let p = fromList [0.9, 0.1] :: Tensor '[2]
+  let t = fromList [1.0, 0.0] :: Tensor '[2]
+  putStrLn $ "predictions = " ++ show (toList p)
+  putStrLn $ "targets     = " ++ show (toList t)
+  putStrLn $ "MSE loss    = " ++ show (mseLoss p t)
   putStrLn ""
 
-  putStrLn "Layer 4 complete."
-
-result :: Bool -> String
-result True  = "PASS"
-result False = "FAIL"
+  putStrLn "Layer 5 complete."
+  putStrLn ""
+  putStrLn "ALL 5 LAYERS COMPLETE - Weave DSL is built!"
 
 r4 :: Double -> Double
 r4 x = fromIntegral (round (x * 10000) :: Int) / 10000.0
-
-r6 :: Double -> Double
-r6 x = fromIntegral (round (x * 1000000) :: Int) / 1000000.0
