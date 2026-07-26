@@ -18,16 +18,18 @@ module Weave.Core
 -- Expr a = a computation that produces a value of type a
 --
 -- Examples:
---   Lit 3.0                        -- just the number 3.0
---   Add (Lit 3.0) (Lit 4.0)        -- 3.0 + 4.0
+--   Lit 3.0                       -- just the number 3.0
+--   Add (Lit 3.0) (Lit 4.0)       -- 3.0 + 4.0
 --   Mul (Lit 2.0) (Add (Lit 3.0) (Lit 4.0))  -- 2.0 * (3.0 + 4.0)
+--   Div (Lit 10.0) (Lit 2.0)      -- 10.0 / 2.0
 
 data Expr a where
-  Lit :: a                         -> Expr a
-  Add :: Num a => Expr a -> Expr a -> Expr a
-  Sub :: Num a => Expr a -> Expr a -> Expr a
-  Mul :: Num a => Expr a -> Expr a -> Expr a
-  Neg :: Num a => Expr a           -> Expr a
+  Lit :: a                                    -> Expr a
+  Add :: Num a        => Expr a -> Expr a     -> Expr a
+  Sub :: Num a        => Expr a -> Expr a     -> Expr a
+  Mul :: Num a        => Expr a -> Expr a     -> Expr a
+  Neg :: Num a        => Expr a               -> Expr a
+  Div :: Fractional a => Expr a -> Expr a     -> Expr a
 
 -- | Smart constructor: lift a plain value into the DSL
 lit :: a -> Expr a
@@ -41,6 +43,7 @@ eval (Add a b) = eval a + eval b
 eval (Sub a b) = eval a - eval b
 eval (Mul a b) = eval a * eval b
 eval (Neg a)   = negate (eval a)
+eval (Div a b) = eval a / eval b
 
 -- | Allows writing  e1 + e2  instead of  Add e1 e2
 -- Standard Haskell operators now work on DSL expressions
@@ -52,6 +55,11 @@ instance Num a => Num (Expr a) where
   abs _       = error "abs not supported yet"
   signum _    = error "signum not supported yet"
   fromInteger = Lit . fromInteger
+
+-- | Allows writing  e1 / e2  instead of  Div e1 e2
+instance Fractional a => Fractional (Expr a) where
+  (/)          = Div
+  fromRational = Lit . fromRational
 
 instance Show a => Show (Expr a) where
   show expr = "Expr => " ++ show (eval expr)
