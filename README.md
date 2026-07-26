@@ -1,4 +1,4 @@
-# Weave
+# Weave v0.1
 
 **A compositional, type-safe tensor algebra DSL embedded in Haskell.**
 
