@@ -10,6 +10,7 @@ library
     , Weave.Ops
     , Weave.Grad
     , Weave.Models
+    , Weave.Syntax
   default-language: Haskell2010
   default-extensions:
       DataKinds
@@ -22,6 +23,7 @@ library
       base ^>=4.18
     , vector >= 0.13
     , random >= 1.2
+
 executable weave-demo
   main-is:          Main.hs
   hs-source-dirs:   app
