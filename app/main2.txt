@@ -1,0 +1,45 @@
+module Main where
+
+import Weave.Core   -- Layer 1: AST & Eval
+import Weave.Shape  -- Layer 2: Type-level Shapes
+import Weave.Ops    -- Layer 3: Tensor Ops
+import Weave.Grad   -- Layer 4: Dual Number Autodiff
+
+main :: IO ()
+main = do
+  putStrLn "=========================================="
+  putStrLn "         WEAVE v0.1 DEMONSTRATION         "
+  putStrLn "=========================================="
+
+  -- 1. Arithmetic Operations (Layer 1 AST)
+  putStrLn "\n--- 1. Arithmetic Operations ---"
+  let addVal = eval (Lit 10.0 + Lit 5.0 :: Expr Double)
+  let subVal = eval (Lit 10.0 - Lit 5.0 :: Expr Double)
+  let mulVal = eval (Lit 10.0 * Lit 5.0 :: Expr Double)
+  let divVal = eval (Lit 10.0 / Lit 5.0 :: Expr Double)
+  
+  putStrLn $ "Add (10 + 5): " ++ show addVal
+  putStrLn $ "Sub (10 - 5): " ++ show subVal
+  putStrLn $ "Mul (10 * 5): " ++ show mulVal
+  putStrLn $ "Div (10 / 5): " ++ show divVal
+
+  -- 2. Derivatives (Layer 4 Dual Numbers)
+  putStrLn "\n--- 2. Derivatives ---"
+  -- d/dx (x^2) at x = 3.0 -> expected: 2x = 6.0
+  let d_x2 = diff (\x -> x^2) 3.0
+  
+  -- d/dx (x^3 + 2x) at x = 3.0 -> expected: 3x^2 + 2 = 29.0
+  let d_poly = diff (\x -> x^3 + 2*x) 3.0
+  
+  putStrLn $ "d/dx (x^2)      at x=3.0 -> " ++ show d_x2
+  putStrLn $ "d/dx (x^3 + 2x) at x=3.0 -> " ++ show d_poly
+
+  -- 3. Chain Rule / Vector Gradient
+  putStrLn "\n--- 3. Vector Chain Rule ---"
+  -- Composite vector function: f([x, y]) = (x^2) + (2y)^2
+  -- Gradients: [2x, 8y] -> at (3.0, 2.0) expected: [6.0, 16.0]
+  let chainRuleVec [x, y] = x^2 + (2 * y)^2
+      chainRuleVec _      = 0
+  let vecGrad = gradVec chainRuleVec [3.0, 2.0]
+  
+  putStrLn $ "grad f([x, y]) at [3.0, 2.0] -> " ++ show vecGrad

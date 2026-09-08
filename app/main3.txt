@@ -1,0 +1,10 @@
+ -- 2. Derivatives (Layer 4 Dual Numbers)
+  putStrLn "\n--- 2. Derivatives ---"
+  -- d/dx (x^2) at x = 3.0 -> expected: 2x = 6.0
+  let d_x2 = diff (\x -> x^2) 3.0
+  
+  -- d/dx (x^3 + 2x) at x = 3.0 -> expected: 3x^2 + 2 = 29.0
+  let d_poly = diff (\x -> x^3 + 2*x) 3.0
+  
+  putStrLn $ "d/dx (x^2)      at x=3.0 -> " ++ show d_x2
+  putStrLn $ "d/dx (x^3 + 2x) at x=3.0 -> " ++ show d_poly

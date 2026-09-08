@@ -1,0 +1,9 @@
+-- 3. Chain Rule / Vector Gradient
+  putStrLn "\n--- 3. Vector Chain Rule ---"
+  -- Composite vector function: f([x, y]) = (x^2) + (2y)^2
+  -- Gradients: [2x, 8y] -> at (3.0, 2.0) expected: [6.0, 16.0]
+  let chainRuleVec [x, y] = x^2 + (2 * y)^2
+      chainRuleVec _      = 0
+  let vecGrad = gradVec chainRuleVec [3.0, 2.0]
+  
+  putStrLn $ "grad f([x, y]) at [3.0, 2.0] -> " ++ show vecGrad

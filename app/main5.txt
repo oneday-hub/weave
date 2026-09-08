@@ -1,0 +1,2 @@
+cabal build
+cabal run weave-demo
